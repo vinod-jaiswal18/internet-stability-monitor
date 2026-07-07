@@ -255,26 +255,6 @@ Runtime files:
 
 ---
 
-## Planned Features (v3.0)
-
-* Desktop notifications
-* Email alerts
-* Telegram notifications
-* Slack/Webhook integration
-* Live latency graph
-* Bandwidth monitoring
-* Speed test integration
-* Multiple target monitoring
-* IPv6 support
-* Systemd service installer
-* Docker image
-* HTML reports
-* Weekly and monthly uptime reports
-* Grafana/Prometheus exporter
-* Automatic software updates
-
----
-
 ## License
 
 MIT License
