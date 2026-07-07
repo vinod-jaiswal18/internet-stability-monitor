@@ -1,46 +1,134 @@
-# Internet Stability Monitor
+# Internet Stability Monitor v2.2
 
-A lightweight terminal-based Internet monitoring tool for Ubuntu/Linux that continuously checks your Internet connection, detects outages, measures latency, and maintains a history of connectivity issues.
+A lightweight, terminal-based Internet monitoring service for Ubuntu/Linux that continuously monitors Internet connectivity in the background, tracks outages, records public IP changes, and provides a live dashboard on demand.
+
+Unlike traditional ping tools, Internet Stability Monitor is designed to run 24×7 with minimal resource usage while maintaining a detailed history of Internet outages and network changes.
+
+---
 
 ## Features
 
-* ✅ Real-time Internet connectivity monitoring
-* 📡 Live ping latency (Current / Min / Avg / Max)
-* 📉 Packet loss statistics
-* 📦 Total packets sent, received and dropped
-* 🌐 Displays:
+### Background Monitoring
 
-  * Public IP Address
-  * Private IP Address
-  * Default Gateway (Router IP)
-* 🔴 Live outage detection
-* ⏱ Tracks current outage duration
-* 📋 Maintains the **last 10 outages**
-* 🚨 Separate history for **major outages (>5 minutes)**
-* 💾 Automatic CSV logging of all outages
-* 🖥️ Compact terminal dashboard using Rich
-* ⚡ Lightweight and suitable for 24×7 monitoring
+* Runs as a background service
+* Very low CPU and memory usage
+* Dashboard can be opened anytime without interrupting monitoring
+* Graceful start and stop commands
+
+### Connectivity Monitoring
+
+* Continuous Internet monitoring using ICMP Ping
+* Configurable target host (Google DNS by default)
+* Tracks:
+
+  * Packets Sent
+  * Packets Received
+  * Packets Dropped
+  * Packet Loss %
+  * Internet Uptime %
+* Live latency statistics:
+
+  * Current
+  * Minimum
+  * Average
+  * Maximum
+
+### Network Information
+
+Displays live network information including:
+
+* Public IP Address
+* Private IP Address
+* Default Gateway (Router IP)
+* ISP Name
+* Approximate Location (City / Region / Country)
+
+Public IP information refreshes automatically every 5 minutes.
 
 ---
 
-## Screenshot
+## Outage Tracking
 
-*Add a screenshot of the terminal dashboard here.*
+Automatically detects Internet outages and records:
+
+* Start time
+* End time
+* Duration
+* Packets lost during outage
+
+### Last 10 Outages
+
+Shows the most recent connectivity interruptions.
+
+### Major Outages
+
+Maintains a separate history of outages longer than 5 minutes.
+
+### Downtime Statistics
+
+Tracks:
+
+* Current outage duration
+* Today's cumulative downtime
+* Longest outage
+* Last restored time
+* Total outage count
 
 ---
 
-## Requirements
+## Public IP Change Detection
 
-* Ubuntu / Debian Linux
-* Python 3.8+
-* Rich library
+The monitor automatically detects whenever your ISP assigns a new public IP address.
 
-Install dependencies:
+Example:
 
-```bash
-sudo apt update
-sudo apt install python3 python3-pip -y
-pip3 install rich
+| Time     | Previous IP       | Current IP    |
+| -------- | ----------------- | ------------- |
+| 14:25:18 | ~~49.xxx.xxx.12~~ | 49.xxx.xxx.48 |
+
+Useful for:
+
+* Dynamic IP connections
+* ISP troubleshooting
+* Router reboot verification
+* PPPoE reconnect detection
+
+---
+
+## Dashboard
+
+The dashboard is divided into four compact panels:
+
+```
++----------------------+----------------------+
+| Metrics              | Last 10 Outages      |
++----------------------+----------------------+
+| Major Outages        | Public IP Changes    |
++----------------------+----------------------+
+```
+
+The dashboard can be opened anytime while monitoring continues in the background.
+
+---
+
+## Logging
+
+All outages are automatically logged into daily CSV files.
+
+Example:
+
+```
+~/.internet-monitor/
+├── internet_monitor_2026-07-07.csv
+├── state.json
+└── monitor.pid
+```
+
+CSV format:
+
+```
+event,start_time,end_time,duration_seconds,packets_lost
+OUTAGE,2026-07-07 10:15:11,2026-07-07 10:15:16,5,5
 ```
 
 ---
@@ -54,143 +142,147 @@ git clone https://github.com/<your-username>/internet-stability-monitor.git
 cd internet-stability-monitor
 ```
 
-Make the script executable:
+Install dependencies:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-pip -y
+pip3 install rich
+```
+
+Make executable:
 
 ```bash
 chmod +x internet_monitor.py
 ```
 
-Run the monitor:
+---
+
+## Usage
+
+### Start background monitoring
 
 ```bash
-./internet_monitor.py
+./internet_monitor.py start
 ```
 
-Or:
+---
+
+### Open live dashboard
 
 ```bash
-python3 internet_monitor.py
+./internet_monitor.py monitor
 ```
 
 ---
 
-## Dashboard Metrics
+### Display current statistics
 
-The dashboard displays:
-
-* Connection Status
-* Target Host
-* Current Public IP
-* Current Private IP
-* Router (Gateway) IP
-* Packets Sent
-* Packets Received
-* Packets Dropped
-* Packet Loss %
-* Total Outages
-* Current Ping
-* Minimum Ping
-* Average Ping
-* Maximum Ping
-* Current Downtime
-* Current Lost Packets
-
----
-
-## Outage Tracking
-
-### Last 10 Outages
-
-Shows:
-
-* Outage start time
-* Connection restored time
-* Total outage duration
-* Number of packets lost
-
-### Major Outages
-
-Maintains a separate list of outages longer than five minutes for easy ISP reliability analysis.
-
----
-
-## Log File
-
-Every outage is automatically recorded in:
-
-```text
-internet_monitor_log.csv
-```
-
-Example:
-
-```csv
-event,start_time,end_time,duration_seconds,packets_lost
-OUTAGE,2026-07-03 10:15:31,2026-07-03 10:15:38,7,7
+```bash
+./internet_monitor.py status
 ```
 
 ---
 
-## Customization
+### Stop monitoring
 
-Change the target host:
+```bash
+./internet_monitor.py stop
+```
+
+---
+
+### Reset statistics
+
+```bash
+./internet_monitor.py reset
+```
+
+---
+
+## Configuration
+
+Default settings:
 
 ```python
 HOST = "8.8.8.8"
-```
-
-Examples:
-
-| Host           | Purpose                  |
-| -------------- | ------------------------ |
-| 8.8.8.8        | Google DNS               |
-| 1.1.1.1        | Cloudflare DNS           |
-| Your Router IP | Local network monitoring |
-
-Adjust ping interval:
-
-```python
 INTERVAL = 1
+MAJOR_OUTAGE_SECONDS = 300
+IP_REFRESH_SECONDS = 300
 ```
 
-Adjust major outage threshold:
+You can easily customize:
 
-```python
-MAJOR_OUTAGE_SECONDS = 300
+* Ping target
+* Ping interval
+* Major outage threshold
+* Public IP refresh interval
+
+---
+
+## Project Structure
+
+```
+internet-monitor/
+│
+├── internet_monitor.py
+├── README.md
+└── LICENSE
+```
+
+Runtime files:
+
+```
+~/.internet-monitor/
+│
+├── monitor.pid
+├── state.json
+├── internet_monitor_YYYY-MM-DD.csv
 ```
 
 ---
 
 ## Typical Use Cases
 
-* Monitor ISP stability
-* Detect intermittent Internet drops
-* Identify long outages
-* Troubleshoot Wi-Fi connectivity
-* Verify router stability
-* Collect outage evidence for ISP support
+* Monitor ISP reliability
+* Detect intermittent Internet issues
+* Verify broadband stability
+* Monitor router reconnects
+* Detect public IP changes
+* Collect evidence for ISP support tickets
+* Long-term home lab monitoring
+* Remote workstation monitoring
 
 ---
 
-## Roadmap
+## Planned Features (v3.0)
 
-Planned enhancements:
-
-* Email notifications
-* Telegram alerts
 * Desktop notifications
+* Email alerts
+* Telegram notifications
+* Slack/Webhook integration
 * Live latency graph
-* Daily statistics
-* Weekly and monthly reports
-* Multiple host monitoring
-* Automatic IP refresh
+* Bandwidth monitoring
 * Speed test integration
-* Systemd service support
-* Docker support
-* Prometheus/Grafana integration
+* Multiple target monitoring
+* IPv6 support
+* Systemd service installer
+* Docker image
+* HTML reports
+* Weekly and monthly uptime reports
+* Grafana/Prometheus exporter
+* Automatic software updates
 
 ---
 
 ## License
 
 MIT License
+
+---
+
+## Contributing
+
+Contributions, bug reports, and feature requests are welcome. Feel free to open an issue or submit a pull request.
+
+If you find this project useful, consider giving it a ⭐ on GitHub.
